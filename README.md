@@ -72,6 +72,7 @@ Both TCP and UDP traffic modes are supported. Results are exported as JSON and v
 | Userspace / orchestration | Python 3 (BCC bindings) |
 | HTTP workload | Python `http.server`, `requests` |
 | Data analysis & graphing | NumPy, pandas, matplotlib |
+| Deployment | Docker |
 
 ---
 
