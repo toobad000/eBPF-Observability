@@ -1,0 +1,42 @@
+# Dockerfile for eBPF Monitoring Container
+# This container runs eBPF programs and requires privileged access to the kernel
+
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during build
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies including BCC from Ubuntu repos
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    bpfcc-tools \
+    python3-bpfcc \
+    libbpfcc \
+    linux-tools-common \
+    linux-tools-generic \
+    build-essential \
+    kmod \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+
+# Create results directory
+RUN mkdir -p /app/results
+
+# Default command
+CMD ["python3", "--version"]
+
+# Notes:
+# - Must run with --privileged flag
+# - Must mount /sys/kernel/debug, /lib/modules, /usr/src
+# - Requires host network mode for accurate monitoring

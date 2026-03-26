@@ -1,0 +1,98 @@
+services:
+  # Application baseline test (app-only monitoring)
+  app-baseline:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.app
+    container_name: observability-app-baseline
+    volumes:
+      - ../results:/app/results
+      - ../scripts:/app/scripts
+      - ../src:/app/src
+    working_dir: /app
+    command: python3 scripts/test_app_only.py --requests 100 --output ./results/baseline
+    networks:
+      - observability-net
+
+  # Cross-layer test (app + eBPF monitoring)
+  cross-layer-test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ebpf
+    container_name: observability-cross-layer
+    privileged: true
+    network_mode: host
+    pid: host
+    volumes:
+      - /sys/kernel/debug:/sys/kernel/debug:ro
+      - /lib/modules:/lib/modules:ro
+      - /usr/src:/usr/src:ro
+      - /proc:/host/proc:ro
+      - ../results:/app/results
+      - ../scripts:/app/scripts
+      - ../src:/app/src
+    working_dir: /app
+    command: python3 scripts/test_cross_layer.py --requests 100 --output ./results
+    depends_on:
+      app-baseline:
+        condition: service_completed_successfully
+
+  # Correlator (runs after both tests complete)
+  correlator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.app
+    container_name: observability-correlator
+    volumes:
+      - ../results:/app/results
+      - ../src:/app/src
+    working_dir: /app
+    command: >
+      sh -c " if [ -f ./results/app_metrics.json ] && [ -f ./results/ebpf_events.json ]; then
+        python3 src/correlation/correlator.py --app-metrics ./results/app_metrics.json --ebpf-events ./results/ebpf_events.json --output ./results/correlations.json;
+      else
+        echo 'Error: Missing input files for correlation';
+        echo 'Expected: ./results/app_metrics.json and ./results/ebpf_events.json';
+        ls -la ./results/;
+        exit 1;
+      fi "
+    depends_on:
+      cross-layer-test:
+        condition: service_completed_successfully
+    networks:
+      - observability-net
+
+  # Analyzer (runs after correlation)
+  analyzer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.app
+    container_name: observability-analyzer
+    volumes:
+      - ../results:/app/results
+      - ../src:/app/src
+    working_dir: /app
+    command: >
+      sh -c " if [ -f ./results/correlations.json ]; then
+        if [ -f ./results/baseline/app_metrics_baseline.json ]; then
+          python3 src/correlation/analyzer.py --correlations ./results/correlations.json --baseline ./results/baseline/app_metrics_baseline.json --output ./results/comparison_report.json;
+        elif [ -f ./results/baseline/app_only_baseline.json ]; then
+          python3 src/correlation/analyzer.py --correlations ./results/correlations.json --baseline ./results/baseline/app_only_baseline.json --output ./results/comparison_report.json;
+        else
+          echo 'Warning: No baseline file found, running without baseline comparison';
+          python3 src/correlation/analyzer.py --correlations ./results/correlations.json --output ./results/comparison_report.json;
+        fi
+      else
+        echo 'Error: Missing correlations.json';
+        ls -la ./results/;
+        exit 1;
+      fi "
+    depends_on:
+      correlator:
+        condition: service_completed_successfully
+    networks:
+      - observability-net
+
+networks:
+  observability-net:
+    driver: bridge
