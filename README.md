@@ -10,19 +10,13 @@ Built as a group project for NET4000 at Carleton University (2025). This project
 
 ## Results
 
-### Per-Request Latency — Application vs Kernel Views
-<div align="left">
-  <img src="https://raw.githubusercontent.com/Tevfik-Can/Net4000-Project/bpftools/analysis/latency_lines.png" alt="Per-request latency: application vs kernel views" width="30%"/>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/Tevfik-Can/Net4000-Project/bpftools/analysis/latency_lines.png" alt="Per-request latency: application vs kernel views" width="32%"/>
+  <img src="https://raw.githubusercontent.com/Tevfik-Can/Net4000-Project/bpftools/analysis/latency_stacked.png" alt="Kernel components stacked with app latency overlay" width="32%"/>
+  <img src="https://raw.githubusercontent.com/Tevfik-Can/Net4000-Project/bpftools/analysis/summary_mean_p95.png" alt="Summary mean and P95 latency stats" width="32%"/>
 </div>
-
-### Kernel Component Breakdown (Stacked) with Application Latency Overlay
-<div align="left">
-  <img src="https://raw.githubusercontent.com/Tevfik-Can/Net4000-Project/bpftools/analysis/latency_stacked.png" alt="Kernel components stacked with app latency overlay" width="30%"/>
-</div>
-
-### Summary Latency Stats Across Requests (Mean & P95)
-<div align="left">
-  <img src="https://raw.githubusercontent.com/Tevfik-Can/Net4000-Project/bpftools/analysis/summary_mean_p95.png" alt="Summary mean and P95 latency stats" width="30%"/>
+<div align="center">
+  <sub>Per-request latency (app vs kernel) &nbsp;|&nbsp; Kernel components stacked &nbsp;|&nbsp; Mean & P95 summary</sub>
 </div>
 
 ---
@@ -58,11 +52,12 @@ Both TCP and UDP traffic modes are supported. Results are exported as JSON and v
 │   ├── fast_server.py    # Minimal HTTP server
 │   └── client.py         # HTTP client with latency logging
 ├── analysis/
-   ├── simple_test.py    # End-to-end TCP cross-layer test
-   ├── simple_test2.py   # TCP + UDP combined test
-   ├── graphing.py       # Stacked bar chart generator
-   └── summary.py        # Mean / P95 summary chart generator
-
+│   ├── simple_test.py    # End-to-end TCP cross-layer test
+│   ├── simple_test2.py   # TCP + UDP combined test
+│   ├── graphing.py       # Stacked bar chart generator
+│   └── summary.py        # Mean / P95 summary chart generator
+└── docs/
+    └── PROJECT.md
 ```
 
 ---
@@ -92,6 +87,8 @@ sudo apt install -y clang llvm libelf-dev libbpf-dev \
 # Python dependencies
 pip install -r requirements.txt
 ```
+
+> A pre-configured Ubuntu VM with all dependencies installed is available [here](https://drive.google.com/drive/folders/1RF5JRG1DJLXjseNQS9AUgnmlyvlN5KDK?usp=sharing).
 
 ---
 
